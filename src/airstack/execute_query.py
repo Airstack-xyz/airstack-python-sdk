@@ -75,7 +75,7 @@ class AirstackClient:
         """
         headers = {
             'Content-Type': 'application/json',
-            'x-api-key': self.api_key
+            'Authorization': self.api_key
         }
         payload = {
             'query': query,
