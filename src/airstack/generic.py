@@ -1,5 +1,8 @@
 import re
-from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument
+from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document, OperationDefinition, VariableDefinition
+from graphql.language.visitor import Visitor
+from graphql.language import ast
+from graphql import parse, print_ast
 
 
 def find_page_info(json_data):
@@ -142,3 +145,73 @@ def has_cursor(ast, key):
                                     if field.name.value == 'cursor':
                                         return True
     return False
+
+class RemoveQueryByStartingName(Visitor):
+    """Class to remove query from multi query which does not have next or prevCursor
+
+    Args:
+        Visitor (_type_): _description_
+    """
+    def __init__(self, query_start):
+        self.query_start = query_start
+
+    def enter_OperationDefinition(self, node, key, parent, path, ancestors):
+        if node.operation == 'query':
+            selections = node.selection_set.selections
+            selections[:] = [selection for selection in selections if not self._should_remove_query(selection)]
+            if not selections:
+                # Remove variables when there are no remaining selections
+                node.variable_definitions = None
+
+    def _should_remove_query(self, selection):
+        if isinstance(selection, FragmentSpread):
+            return False
+        if isinstance(selection, InlineFragment):
+            return self._should_remove_query(selection.selection_set)
+        if isinstance(selection, Field):
+            if selection.name.value.startswith(self.query_start):
+                return True
+        return False
+
+def add_page_info_to_queries(graphql_document):
+    """Func to add page info to the graphql query
+
+    Args:
+        graphql_document (ast): parsed query
+
+    Returns:
+        str: page info added query
+    """
+    parsed_document = parse(graphql_document)
+    modified_document = _add_page_info_to_queries(parsed_document)
+    return print_ast(modified_document)
+
+def _add_page_info_to_queries(node):
+    if isinstance(node, Document):
+        node.definitions = [_add_page_info_to_queries(definition) for definition in node.definitions]
+    elif isinstance(node, Field):
+        if node.selection_set is None:
+            node.selection_set = SelectionSet(selections=[])
+        node.selection_set.selections.append(Field(
+            name=Name(value="pageInfo"),
+            selection_set=SelectionSet(selections=[
+                Field(name=Name(value="nextCursor")),
+                Field(name=Name(value="prevCursor"))
+            ])
+        ))
+    elif hasattr(node, "selection_set"):
+        node.selection_set.selections = [_add_page_info_to_queries(selection) for selection in node.selection_set.selections]
+    return node
+
+def remove_unused_variables(document_ast, query):
+    """Func to remove unused variables from the query
+
+    Args:
+        document_ast (ast): parsed query
+        query (str): query
+    """
+    for definition in document_ast.definitions:
+        for _count, _variable in enumerate(definition.variable_definitions):
+            if query.count(_variable.variable.name.value) == 1:
+                del document_ast.definitions[0].variable_definitions[_count]
+    return print_ast(document_ast)

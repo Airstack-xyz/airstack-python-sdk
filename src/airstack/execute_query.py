@@ -5,13 +5,17 @@ Description: This module contains the methods to execute the query.
 
 import json
 import re
-from graphql import parse, print_ast
+from graphql import parse, print_ast, visit
 from airstack.send_request import SendRequest
+from graphql.language.ast import OperationDefinition
 from airstack.generic import (
     find_page_info,
     add_cursor_to_input_field,
     replace_cursor_value,
-    has_cursor
+    has_cursor,
+    RemoveQueryByStartingName,
+    add_page_info_to_queries,
+    remove_unused_variables
 )
 from airstack.constant import AirstackConstants
 
@@ -102,7 +106,7 @@ class AirstackClient:
         regex = re.compile(r'pageInfo')
         has_page_info = regex.search(query)
         if has_page_info is None:
-            return QueryResponse(None, None, "Pass query having pageInfo", None, None, None, None)
+            query = add_page_info_to_queries(query)
 
         query_response = await self.execute_query(query, variables)
         if query_response.error is not None:
@@ -125,16 +129,19 @@ class AirstackClient:
             """
             next_query = query
             for _page_info_key, _page_info_value in page_info.items():
-                if _page_info_value['nextCursor'] == "":
-                    continue
                 document_ast = parse(next_query)
-                if has_cursor(document_ast, _page_info_key):
-                    replace_cursor_value(document_ast, _page_info_key,
-                    _page_info_value['nextCursor'])
+                if _page_info_value['nextCursor'] == "":
+                    visitor = RemoveQueryByStartingName(query_start=_page_info_key)
+                    document_ast = visit(document_ast, visitor)
+                    next_query = remove_unused_variables(document_ast=document_ast, query=print_ast(document_ast))
                 else:
-                    add_cursor_to_input_field(document_ast, _page_info_key,
-                    _page_info_value['nextCursor'])
-                next_query = print_ast(document_ast)
+                    if has_cursor(document_ast, _page_info_key):
+                        replace_cursor_value(document_ast, _page_info_key,
+                        _page_info_value['nextCursor'])
+                    else:
+                        add_cursor_to_input_field(document_ast, _page_info_key,
+                        _page_info_value['nextCursor'])
+                    next_query = print_ast(document_ast)
             return await self.execute_paginated_query(next_query, variables)
 
         async def get_prev_page():
@@ -147,16 +154,19 @@ class AirstackClient:
             """
             next_query = query
             for _page_info_key, _page_info_value in page_info.items():
-                if _page_info_value['prevCursor'] == "":
-                    continue
                 document_ast = parse(next_query)
-                if has_cursor(document_ast, _page_info_key):
-                    replace_cursor_value(document_ast, _page_info_key,
-                    _page_info_value['prevCursor'])
+                if _page_info_value['prevCursor'] == "":
+                    visitor = RemoveQueryByStartingName(query_start=_page_info_key)
+                    document_ast = visit(document_ast, visitor)
+                    next_query = remove_unused_variables(document_ast=document_ast, query=print_ast(document_ast))
                 else:
-                    add_cursor_to_input_field(document_ast, _page_info_key,
-                    _page_info_value['prevCursor'])
-                next_query = print_ast(document_ast)
+                    if has_cursor(document_ast, _page_info_key):
+                        replace_cursor_value(document_ast, _page_info_key,
+                        _page_info_value['prevCursor'])
+                    else:
+                        add_cursor_to_input_field(document_ast, _page_info_key,
+                        _page_info_value['prevCursor'])
+                    next_query = print_ast(document_ast)
             return await self.execute_paginated_query(next_query, variables)
 
         return QueryResponse(query_response.response, query_response.status_code,
