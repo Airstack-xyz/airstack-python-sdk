@@ -147,11 +147,8 @@ def has_cursor(ast, key):
     return False
 
 class RemoveQueryByStartingName(Visitor):
-    """Class to remove query from multi query which does not have next or prevCursor
+    """Class to remove queries from a multi-query that do not have next or prevCursor based on field names or aliases"""
 
-    Args:
-        Visitor (_type_): _description_
-    """
     def __init__(self, query_start):
         self.query_start = query_start
 
@@ -169,7 +166,9 @@ class RemoveQueryByStartingName(Visitor):
         if isinstance(selection, InlineFragment):
             return self._should_remove_query(selection.selection_set)
         if isinstance(selection, Field):
-            if selection.name.value.startswith(self.query_start):
+            field_name = selection.name.value
+            alias_name = selection.alias.value if selection.alias else None
+            if field_name.startswith(self.query_start) or (alias_name and alias_name.startswith(self.query_start)):
                 return True
         return False
 
