@@ -1,7 +1,11 @@
+"""
+Module: generic.py
+Description: This module contains the generic methods required by this product.
+"""
+
 import re
-from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document, OperationDefinition, VariableDefinition
+from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document
 from graphql.language.visitor import Visitor
-from graphql.language import ast
 from graphql import parse, print_ast
 
 
@@ -187,7 +191,8 @@ def add_page_info_to_queries(graphql_document):
 
 def _add_page_info_to_queries(node):
     if isinstance(node, Document):
-        node.definitions = [_add_page_info_to_queries(definition) for definition in node.definitions]
+        node.definitions = [_add_page_info_to_queries(definition) for
+        definition in node.definitions]
     elif isinstance(node, Field):
         if node.selection_set is None:
             node.selection_set = SelectionSet(selections=[])
@@ -199,7 +204,8 @@ def _add_page_info_to_queries(node):
             ])
         ))
     elif hasattr(node, "selection_set"):
-        node.selection_set.selections = [_add_page_info_to_queries(selection) for selection in node.selection_set.selections]
+        node.selection_set.selections = [_add_page_info_to_queries(selection) for
+        selection in node.selection_set.selections]
     return node
 
 def remove_unused_variables(document_ast, query):
