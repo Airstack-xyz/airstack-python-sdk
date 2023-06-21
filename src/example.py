@@ -39,22 +39,8 @@ async def main():
     query_response = await execute_query_client.execute_paginated_query()
     if query_response.has_next_page:
         next_page_response = await query_response.get_next_page
-    if next_page_response.has_next_page:
-        next_page_response = await next_page_response.get_next_page
-    if next_page_response.has_next_page:
-        next_page_response = await next_page_response.get_next_page
     if next_page_response.has_prev_page:
         prev_page_response = await next_page_response.get_prev_page
-    if prev_page_response.has_prev_page:
-        prev_page_response = await prev_page_response.get_prev_page
-    if prev_page_response.has_prev_page:
-        prev_page_response = await prev_page_response.get_prev_page
-    if prev_page_response.has_next_page:
-        next_page_response = await prev_page_response.get_next_page
-    if next_page_response.has_prev_page:
-        prev_page_response = await next_page_response.get_prev_page
-    if next_page_response.has_next_page:
-        next_page_response = await next_page_response.get_next_page
     
     query = """
      query MyQuery($name1: Address!) {
@@ -94,5 +80,90 @@ async def main():
     else:
         print(f"Response: {query_response.data}")
 
+
+  # Example to use popular queries
+
+    execute_query_client = api_client.create_popular_queries_object()
+
+    query_response = await execute_query_client.get_all_tokens(variables={
+      "identity": "vitalik.eth",
+      "tokenType": "ERC721",
+      "blockchain": "ethereum",
+      "limit": 20
+    })
+
+    query_response = await execute_query_client.get_token_details(variables={
+    "address": "0x9340204616750cb61e56437befc95172c6ff6606",
+      "blockchain": "ethereum"
+    })
+
+    query_response = await execute_query_client.get_nft_details(variables={
+    "address": "0x9340204616750cb61e56437befc95172c6ff6606",
+  "blockchain": "ethereum",
+  "tokenId": "2"
+    })
+
+    query_response = await execute_query_client.get_all_nfts(variables={
+   "address": "0x9340204616750cb61e56437befc95172c6ff6606",
+  "blockchain": "ethereum",
+  "limit": 40
+    })
+
+    query_response = await execute_query_client.get_nft_image(variables={
+    "address": "0x9340204616750cb61e56437befc95172c6ff6606",
+  "blockchain": "ethereum",
+  "tokenId": "2"
+    })
+
+    query_response = await execute_query_client.get_wallet_social_and_ens(variables={
+    "identity": "betashop.eth",
+  "blockchain": "ethereum"
+    })
+
+    query_response = await execute_query_client.get_wallet_ens(variables={
+    "identity": "betashop.eth",
+  "blockchain": "ethereum"
+    })
+
+    query_response = await execute_query_client.get_wallet_balance_for_token(variables={
+    "owner": "",
+  "blockchain": "ethereum",
+  "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606"
+    })
+
+    query_response = await execute_query_client.get_token_collection_owner(variables={
+    "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606",
+  "blockchain": "ethereum",
+  "limit": 30
+    })
+
+    query_response = await execute_query_client.get_nft_owners(variables={
+    "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606",
+  "blockchain": "ethereum",
+  "tokenId": "1"
+    })
+
+    query_response = await execute_query_client.get_primary_domain(variables={
+   "identity": "betashop.eth",
+  "blockchain": "ethereum"
+    })
+
+    query_response = await execute_query_client.get_subdomains(variables={
+   "owner": "betashop.eth",
+  "blockchain": "ethereum"
+    })
+
+    query_response = await execute_query_client.get_token_transfers(variables={
+   "tokenAddress": "0x32e14d6f3dda2b95e505b14eb4552fd3eeaa1f0d",
+  "blockchain": "ethereum",
+  "limit": 30
+    })
+
+    query_response = await execute_query_client.get_nft_transfers(variables={
+      "tokenId": "1053",
+   "tokenAddress": "0x32e14d6f3dda2b95e505b14eb4552fd3eeaa1f0d",
+  "blockchain": "ethereum",
+  "limit": 30
+    })
 
 asyncio.run(main())
