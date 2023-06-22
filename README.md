@@ -86,7 +86,7 @@ The `execute_paginated_query` method provides a simple way to paginate the data 
 - `query_response.get_next_page`: a function that can be called to fetch the next page of data
 - `query_response.get_prev_page`: a function that can be called to fetch the previous page of data
 
-### Example
+### Example 1
 ```python
 import asyncio
 from airstack.execute_query import AirstackClient
@@ -158,4 +158,35 @@ async def get_all_pages():
 asyncio.run(get_all_pages()) 
 ```
 
+Example 2: 
+```
+```python
+import asyncio
+from airstack.execute_query import AirstackClient
 
+api_client = AirstackClient(api_key='api-key')
+
+# Use the query and variables from previous example
+
+# Create a Query object
+execute_query_client = api_client.create_execute_query_object(query=query, variables=variables)
+
+async def get_first_page():
+    query_response = await execute_query_client.execute_paginated_query()
+    
+    if query_response.has_next_page:
+        query_response = await query_response.get_next_page
+    
+    if query_response.has_prev_page:
+        query_response = await query_response.get_prev_page
+    
+    yield query_response
+
+
+async def show_usage_next_prev():
+    async for first_page in get_first_page():
+        if not first_page.error:
+            print(first_page.data)
+
+asyncio.run(show_usage_next_prev())
+```
