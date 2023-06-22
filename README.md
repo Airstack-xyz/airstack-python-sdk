@@ -159,7 +159,7 @@ asyncio.run(get_all_pages())
 ```
 
 Example 2: 
-```
+
 ```python
 import asyncio
 from airstack.execute_query import AirstackClient
