@@ -21,7 +21,7 @@ class ExecutePopularQueries():
         self.timeout = timeout
         self.api_key = api_key
 
-    async def get_all_tokens(self, variables):
+    async def get_token_balances(self, variables):
         """Func to get all tokens
 
         Args:
@@ -212,7 +212,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_query()
 
-    async def get_all_nfts(self, variables):
+    async def get_nfts(self, variables):
         """Func to get all nfts of a collection
 
         Args:
@@ -275,7 +275,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_paginated_query()
 
-    async def get_nft_image(self, variables):
+    async def get_nft_images(self, variables):
         """Func to get image of a nft
 
         Args:
@@ -303,7 +303,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_query()
 
-    async def get_wallet_social_and_ens(self, variables):
+    async def get_wallet_ens_and_social(self, variables):
         """Func to get all social profile and ENS name of an wallet
 
         Args:
@@ -374,7 +374,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_query()
 
-    async def get_wallet_balance_for_token(self, variables):
+    async def get_balance_of_token(self, variables):
         """Func to get balance of wallet address for a particular token
 
         Args:
@@ -440,7 +440,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_query()
 
-    async def get_token_collection_owner(self, variables):
+    async def get_holders_of_collection(self, variables):
         """Func to get owners of a token collection
 
         Args:
@@ -508,7 +508,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_paginated_query()
 
-    async def get_nft_owners(self, variables):
+    async def get_holders_of_nft(self, variables):
         """Func to get owner(s) of the NFT
 
         Args:
@@ -576,7 +576,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_paginated_query()
 
-    async def get_primary_domain(self, variables):
+    async def get_primary_ens(self, variables):
         """Func to get Primary Domain for an address
 
         Args:
@@ -605,7 +605,7 @@ class ExecutePopularQueries():
         query=_query, variables=variables)
         return await execute_query_object.execute_query()
 
-    async def get_subdomains(self, variables):
+    async def get_ens_subdomains(self, variables):
         """Func to get sub domains for an address
 
         Args:
