@@ -80,7 +80,7 @@ class AirstackClient:
         api_key=self.api_key, timeout=self.timeout)
         return execute_query
 
-    def create_popular_queries_object(self):
+    def queries_object(self):
         """Create popular query object for popular queries
 
         Returns:

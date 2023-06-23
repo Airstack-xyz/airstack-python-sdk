@@ -83,9 +83,9 @@ async def main():
 
   # Example to use popular queries
 
-    execute_query_client = api_client.create_popular_queries_object()
+    execute_query_client = api_client.queries_object()
 
-    query_response = await execute_query_client.get_all_tokens(variables={
+    query_response = await execute_query_client.get_token_balances(variables={
       "identity": "vitalik.eth",
       "tokenType": "ERC721",
       "blockchain": "ethereum",
@@ -103,19 +103,19 @@ async def main():
   "tokenId": "2"
     })
 
-    query_response = await execute_query_client.get_all_nfts(variables={
+    query_response = await execute_query_client.get_nfts(variables={
    "address": "0x9340204616750cb61e56437befc95172c6ff6606",
   "blockchain": "ethereum",
   "limit": 40
     })
 
-    query_response = await execute_query_client.get_nft_image(variables={
+    query_response = await execute_query_client.get_nft_images(variables={
     "address": "0x9340204616750cb61e56437befc95172c6ff6606",
   "blockchain": "ethereum",
   "tokenId": "2"
     })
 
-    query_response = await execute_query_client.get_wallet_social_and_ens(variables={
+    query_response = await execute_query_client.get_wallet_ens_and_social(variables={
     "identity": "betashop.eth",
   "blockchain": "ethereum"
     })
@@ -125,30 +125,30 @@ async def main():
   "blockchain": "ethereum"
     })
 
-    query_response = await execute_query_client.get_wallet_balance_for_token(variables={
+    query_response = await execute_query_client.get_balance_of_token(variables={
     "owner": "",
   "blockchain": "ethereum",
   "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606"
     })
 
-    query_response = await execute_query_client.get_token_collection_owner(variables={
+    query_response = await execute_query_client.get_holders_of_collection(variables={
     "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606",
   "blockchain": "ethereum",
   "limit": 30
     })
 
-    query_response = await execute_query_client.get_nft_owners(variables={
+    query_response = await execute_query_client.get_holders_of_nft(variables={
     "tokenAddress": "0x9340204616750cb61e56437befc95172c6ff6606",
   "blockchain": "ethereum",
   "tokenId": "1"
     })
 
-    query_response = await execute_query_client.get_primary_domain(variables={
+    query_response = await execute_query_client.get_primary_ens(variables={
    "identity": "betashop.eth",
   "blockchain": "ethereum"
     })
 
-    query_response = await execute_query_client.get_subdomains(variables={
+    query_response = await execute_query_client.get_ens_subdomains(variables={
    "owner": "betashop.eth",
   "blockchain": "ethereum"
     })
