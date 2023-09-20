@@ -99,7 +99,7 @@ def add_cursor_to_input_field(ast, field_name, cursor_value):
                         return
 
 
-def replace_cursor_value(ast, key, cursor_value):
+def replace_cursor_value(ast, key, cursor_value, variables):
     """
     Func to replace cursor value
     Args:
@@ -119,7 +119,12 @@ def replace_cursor_value(ast, key, cursor_value):
                             input_value = argument.value
                             for field in input_value.fields:
                                 if isinstance(field, ObjectField) and field.name.value == 'cursor':
-                                    field.value = StringValue(value=cursor_value)
+                                    if 'name' in field.value._fields:
+                                        _replaced_value = field.value.name.value
+                                        if _replaced_value in variables.keys():
+                                            variables[_replaced_value] = cursor_value
+                                    else:
+                                        field.value = StringValue(value=cursor_value)
                                     return  # Exit the loop if cursor field is found
                             # If cursor field is not found, add it to the input fields
                             cursor_field = create_object_field('cursor', cursor_value)
