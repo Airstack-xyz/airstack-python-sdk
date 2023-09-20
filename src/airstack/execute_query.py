@@ -202,7 +202,7 @@ class ExecuteQuery:
                     self.deleted_queries.append(None)
                 if has_cursor(document_ast, _page_info_key):
                     replace_cursor_value(document_ast, _page_info_key,
-                    _page_info_value['nextCursor'])
+                    _page_info_value['nextCursor'], self.variables)
                 else:
                     add_cursor_to_input_field(document_ast, _page_info_key,
                     _page_info_value['nextCursor'])
@@ -231,7 +231,7 @@ class ExecuteQuery:
             document_ast = parse(next_query)
             if has_cursor(document_ast, _page_info_key):
                 replace_cursor_value(document_ast, _page_info_key,
-                _page_info_value['prevCursor'])
+                _page_info_value['prevCursor'], self.variables)
             else:
                 add_cursor_to_input_field(document_ast, _page_info_key,
                 _page_info_value['prevCursor'])
