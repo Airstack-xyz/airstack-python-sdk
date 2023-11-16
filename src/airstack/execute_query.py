@@ -21,11 +21,13 @@ from airstack.constant import AirstackConstants
 
 warnings.filterwarnings("ignore", message="coroutine .* was never awaited")
 
+
 class QueryResponse:
     """Class for generate the query response
     """
+
     def __init__(self, response, status_code, error, has_next_page=None, has_prev_page=None,
-    get_next_page=None, get_prev_page=None):
+                 get_next_page=None, get_prev_page=None):
         """Init function
 
         Args:
@@ -44,6 +46,7 @@ class QueryResponse:
         self.has_prev_page = has_prev_page
         self.get_next_page = get_next_page
         self.get_prev_page = get_prev_page
+
 
 class AirstackClient:
     """Class to create api client for airstack api's
@@ -77,7 +80,7 @@ class AirstackClient:
             object: execute query obiect
         """
         execute_query = ExecuteQuery(query=query, variables=variables, url=self.url,
-        api_key=self.api_key, timeout=self.timeout)
+                                     api_key=self.api_key, timeout=self.timeout)
         return execute_query
 
     def queries_object(self):
@@ -87,9 +90,16 @@ class AirstackClient:
             object: execute popular query obiect
         """
         from airstack.popular_queries import ExecutePopularQueries
-        execute_popular_query = ExecutePopularQueries(url=self.url,api_key=self.api_key,
-        timeout=self.timeout)
+        execute_popular_query = ExecutePopularQueries(url=self.url, api_key=self.api_key,
+                                                      timeout=self.timeout)
         return execute_popular_query
+
+    def onchain_graph(self):
+        from airstack.onchain_graph import ExecuteOnchainGraph
+        onchain_graph_object = ExecuteOnchainGraph(
+            url=self.url, api_key=self.api_key)
+        return onchain_graph_object
+
 
 class ExecuteQuery:
     """Class to execute query functions
@@ -97,6 +107,7 @@ class ExecuteQuery:
     Returns:
         object: object of execute query
     """
+
     def __init__(self, query=None, variables=None, url=None, api_key=None, timeout=None):
         self.deleted_queries = []
         self.query = query
@@ -157,19 +168,21 @@ class ExecuteQuery:
         query_response = await self.execute_query(query=query)
         if query_response.error is not None:
             return QueryResponse(None, query_response.status_code, query_response.error,
-            None, None, None, None)
+                                 None, None, None, None)
 
         page_info = {}
         for _key, value in query_response.data.items():
             page_info[_key] = find_page_info(query_response.data[_key])
 
-        has_next_page = any(page_info['nextCursor'] != '' for page_info in page_info.values())
-        has_prev_page = any(page_info['prevCursor'] != '' for page_info in page_info.values())
+        has_next_page = any(page_info['nextCursor']
+                            != '' for page_info in page_info.values())
+        has_prev_page = any(page_info['prevCursor']
+                            != '' for page_info in page_info.values())
 
         return QueryResponse(query_response.data, query_response.status_code,
-                            query_response.error, has_next_page, has_prev_page,
-                            self.get_next_page(query, variables, page_info),
-                            self.get_prev_page(query, variables, page_info))
+                             query_response.error, has_next_page, has_prev_page,
+                             self.get_next_page(query, variables, page_info),
+                             self.get_prev_page(query, variables, page_info))
 
     async def get_next_page(self, query, variables, page_info):
         """Async function to get the next page data.
@@ -196,16 +209,16 @@ class ExecuteQuery:
                 visitor = RemoveQueryByStartingName(query_start=_page_info_key)
                 document_ast = visit(document_ast, visitor)
                 next_query = remove_unused_variables(document_ast=document_ast,
-                query=print_ast(document_ast))
+                                                     query=print_ast(document_ast))
             else:
                 if not stored:
                     self.deleted_queries.append(None)
                 if has_cursor(document_ast, _page_info_key):
                     replace_cursor_value(document_ast, _page_info_key,
-                    _page_info_value['nextCursor'], self.variables)
+                                         _page_info_value['nextCursor'], self.variables)
                 else:
                     add_cursor_to_input_field(document_ast, _page_info_key,
-                    _page_info_value['nextCursor'])
+                                              _page_info_value['nextCursor'])
                 next_query = print_ast(document_ast)
         return await self.execute_paginated_query(next_query, variables)
 
@@ -231,9 +244,9 @@ class ExecuteQuery:
             document_ast = parse(next_query)
             if has_cursor(document_ast, _page_info_key):
                 replace_cursor_value(document_ast, _page_info_key,
-                _page_info_value['prevCursor'], self.variables)
+                                     _page_info_value['prevCursor'], self.variables)
             else:
                 add_cursor_to_input_field(document_ast, _page_info_key,
-                _page_info_value['prevCursor'])
+                                          _page_info_value['prevCursor'])
             next_query = print_ast(document_ast)
         return await self.execute_paginated_query(next_query, variables)
