@@ -7,6 +7,7 @@ import re
 from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document
 from graphql.language.visitor import Visitor
 from graphql import parse, print_ast
+from configurations.conf import default_score_map
 
 
 def find_page_info(json_data):
@@ -617,19 +618,6 @@ def format_polygon_nft_data(data, _recommended_users=None):
             })
 
     return recommended_users
-
-
-default_score_map = {
-    'tokenSent': 10,
-    'tokenReceived': 0,
-    'followedByOnLens': 5,
-    'followingOnLens': 7,
-    'followedByOnFarcaster': 5,
-    'followingOnFarcaster': 5,
-    'commonPoaps': 7,
-    'commonEthNfts': 5,
-    'commonPolygonNfts': 0,
-}
 
 
 def identity_map(users):
