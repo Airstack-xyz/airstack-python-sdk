@@ -7,7 +7,7 @@ import re
 from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document
 from graphql.language.visitor import Visitor
 from graphql import parse, print_ast
-from configurations.conf import default_score_map
+from configurations.conf import default_score_map, BURNED_ADDRESSES
 
 
 def find_page_info(json_data):
@@ -634,7 +634,7 @@ def is_burned_address(address):
     if not address:
         return False
     address = address.lower()
-    return address in ["0x0000000000000000000000000000000000000000", "0x000000000000000000000000000000000000dead"]
+    return address in BURNED_ADDRESSES
 
 
 def calculating_score(user, score_map=None):
