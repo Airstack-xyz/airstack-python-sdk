@@ -18,6 +18,8 @@ from airstack.generic import (
     remove_unused_variables
 )
 from airstack.constant import AirstackConstants
+from airstack.popular_queries import ExecutePopularQueries
+from airstack.onchain_graph import ExecuteOnchainGraph
 
 warnings.filterwarnings("ignore", message="coroutine .* was never awaited")
 
@@ -89,13 +91,11 @@ class AirstackClient:
         Returns:
             object: execute popular query obiect
         """
-        from airstack.popular_queries import ExecutePopularQueries
         execute_popular_query = ExecutePopularQueries(url=self.url, api_key=self.api_key,
                                                       timeout=self.timeout)
         return execute_popular_query
 
     def onchain_graph(self):
-        from airstack.onchain_graph import ExecuteOnchainGraph
         onchain_graph_object = ExecuteOnchainGraph(
             url=self.url, api_key=self.api_key)
         return onchain_graph_object
