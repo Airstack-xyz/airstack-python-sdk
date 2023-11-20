@@ -6,6 +6,7 @@ Description: This module contains the methods of Onchain Graphs.
 from airstack.execute_query import AirstackClient
 from airstack.generic import format_poaps_data, format_farcaster_followings_data, format_lens_followings_data, format_farcaster_followers_data, format_lens_followers_data, format_token_sent_data, format_token_received_data, format_eth_nft_data, format_polygon_nft_data, calculating_score
 import traceback
+from utility.custom_exception import AirstackException
 
 
 class ExecuteOnchainGraph():
