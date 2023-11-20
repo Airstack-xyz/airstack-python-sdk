@@ -737,14 +737,14 @@ class ExecuteOnchainGraph():
         recommended_users = []
         fetch_functions = [
             self.__fetch_poaps_data,
-            # self.__fetch_farcaster_followings,
-            # self.__fetch_lens_followings,
-            # self.__fetch_farcaster_followers,
-            # self.__fetch_lens_followers,
-            # self.__fetch_token_sent,
-            # self.__fetch_token_received,
-            # self.__fetch_eth_nft,
-            # self.__fetch_polygon_nft,
+            self.__fetch_farcaster_followings,
+            self.__fetch_lens_followings,
+            self.__fetch_farcaster_followers,
+            self.__fetch_lens_followers,
+            self.__fetch_token_sent,
+            self.__fetch_token_received,
+            self.__fetch_eth_nft,
+            self.__fetch_polygon_nft,
         ]
         for func in fetch_functions:
             recommended_users = await func(address, recommended_users)
