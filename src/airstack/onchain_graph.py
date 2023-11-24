@@ -4,7 +4,8 @@ Description: This module contains the methods of Onchain Graphs.
 """
 
 from airstack.execute_query import AirstackClient
-from airstack.generic import format_poaps_data, format_farcaster_followings_data, format_lens_followings_data, format_farcaster_followers_data, format_lens_followers_data, format_token_sent_data, format_token_received_data, format_eth_nft_data, format_polygon_nft_data, calculating_score
+from airstack.constant import SocialsDappName, TransferType
+from airstack.generic import format_poaps_data, format_socials_followings_data, format_socials_followers_data, format_token_sent_data, format_token_received_data, format_eth_nft_data, format_polygon_nft_data, calculating_score
 import traceback
 from utility.custom_exception import AirstackException
 
@@ -13,11 +14,11 @@ class ExecuteOnchainGraph():
     """Class to store onchain graph function
     """
 
-    def __init__(self, url=None, api_key=None):
+    def __init__(self, url=None, api_key=None) -> None:
         self.url = url
         self.api_client = AirstackClient(api_key=api_key)
 
-    async def __fetch_poaps_data(self, address, existing_users=[]):
+    async def _fetch_poaps_data(self, address: str, existing_users: list = []) -> list:
         try:
             user_poaps_event_ids_query = """
             query MyQuery($user: Identity!) {
@@ -104,28 +105,28 @@ class ExecuteOnchainGraph():
                             else:
                                 poap_holders_data_response = await poap_holders_data_response.get_next_page
                         else:
-                            print("Error: ", poap_holders_data_response.error)
-                            break
+                            raise AirstackException(
+                                f"Error message {poap_holders_data_response.error}")
 
                     if not poaps_data_response.has_next_page:
                         break
                     else:
                         poaps_data_response = await poaps_data_response.get_next_page
                 else:
-                    print("Error: ", poaps_data_response.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {poaps_data_response.error}")
 
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()
             raise AirstackException(f"Error message {error}")
 
-    async def __fetch_farcaster_followings(self, address, existing_users=[]):
+    async def _fetch_socials_followings(self, address: str, dappName: SocialsDappName = SocialsDappName.LENS, existing_users: list = []) -> list:
         try:
             social_followings_query = """
-            query MyQuery($user: Identity!) {
+            query MyQuery($user: Identity!, $dappName: String!) {
             SocialFollowings(
-                input: {filter: {identity: {_eq: $user}, dappName: {_eq: farcaster}}, blockchain: ALL, limit: 200}
+                input: {filter: {identity: {_eq: $user}, dappName: {_eq: $dappName}}, blockchain: ALL, limit: 200}
             ) {
                 Following {
                 followingAddress {
@@ -146,7 +147,7 @@ class ExecuteOnchainGraph():
                     isXMTPEnabled
                     }
                     mutualFollower: socialFollowers(
-                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: farcaster}}}
+                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: $dappName}}}
                     ) {
                     Follower {
                         followerAddress {
@@ -166,14 +167,15 @@ class ExecuteOnchainGraph():
             while True:
                 if res is None:
                     execute_query_client = self.api_client.create_execute_query_object(
-                        query=social_followings_query, variables={'user': address})
+                        query=social_followings_query, variables={'user': address, 'dappName': dappName})
                     res = await execute_query_client.execute_paginated_query()
 
                 if res.error is None:
                     followings = [following['followingAddress'] for following in (res.data.get(
                         'SocialFollowings', {}).get('Following', []) or []) if 'followingAddress' in following]
-                    recommended_users = format_farcaster_followings_data(
+                    recommended_users = format_socials_followings_data(
                         followings,
+                        dappName,
                         recommended_users
                     )
 
@@ -182,90 +184,20 @@ class ExecuteOnchainGraph():
                     else:
                         res = await res.get_next_page
                 else:
-                    print("Error: ", res.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {res.error}")
 
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()
             raise AirstackException(f"Error message {error}")
 
-    async def __fetch_lens_followings(self, address, existing_users=[]):
-        try:
-            social_followings_query = """
-            query MyQuery($user: Identity!) {
-            SocialFollowings(
-                input: {filter: {identity: {_eq: $user}, dappName: {_eq: lens}}, blockchain: ALL, limit: 200}
-            ) {
-                Following {
-                followingAddress {
-                    addresses
-                    domains {
-                    name
-                    isPrimary
-                    }
-                    socials {
-                    dappName
-                    blockchain
-                    profileName
-                    profileImage
-                    profileTokenId
-                    profileTokenAddress
-                    }
-                    xmtp {
-                    isXMTPEnabled
-                    }
-                    mutualFollower: socialFollowers(
-                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: lens}}}
-                    ) {
-                    Follower {
-                        followerAddress {
-                        socials {
-                            profileName
-                        }
-                        }
-                    }
-                    }
-                }
-                }
-            }
-            }
-            """
-            res = None
-            recommended_users = existing_users.copy()
-            while True:
-                if res is None:
-                    execute_query_client = self.api_client.create_execute_query_object(
-                        query=social_followings_query, variables={'user': address})
-                    res = await execute_query_client.execute_paginated_query()
-
-                if res.error is None:
-                    followings = [following['followingAddress'] for following in (res.data.get(
-                        'SocialFollowings', {}).get('Following', []) or []) if 'followingAddress' in following]
-                    recommended_users = format_lens_followings_data(
-                        followings,
-                        recommended_users
-                    )
-
-                    if not res.has_next_page:
-                        break
-                    else:
-                        res = await res.get_next_page
-                else:
-                    print("Error: ", res.error)
-                    break
-
-            return recommended_users
-        except Exception as e:
-            error = traceback.format_exc()
-            raise AirstackException(f"Error message {error}")
-
-    async def __fetch_farcaster_followers(self, address, existing_users=[]):
+    async def _fetch_socials_followers(self, address: str, dappName: SocialsDappName = SocialsDappName.LENS, existing_users: list = []) -> list:
         try:
             social_followers_query = """
-            query MyQuery($user: Identity!) {
+            query MyQuery($user: Identity!, $dappName: String!) {
             SocialFollowers(
-                input: {filter: {identity: {_eq: $user}, dappName: {_eq: farcaster}}, blockchain: ALL, limit: 200}
+                input: {filter: {identity: {_eq: $user}, dappName: {_eq: $dappName}}, blockchain: ALL, limit: 200}
             ) {
                 Follower {
                 followerAddress {
@@ -286,7 +218,7 @@ class ExecuteOnchainGraph():
                     isXMTPEnabled
                     }
                     mutualFollowing: socialFollowings(
-                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: farcaster}}}
+                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: $dappName}}}
                     ) {
                     Following {
                         followingAddress {
@@ -306,14 +238,15 @@ class ExecuteOnchainGraph():
             while True:
                 if res is None:
                     execute_query_client = self.api_client.create_execute_query_object(
-                        query=social_followers_query, variables={'user': address})
+                        query=social_followers_query, variables={'user': address, 'dappName': dappName})
                     res = await execute_query_client.execute_paginated_query()
 
                 if res.error is None:
                     followings = [following['followerAddress'] for following in (res.data.get(
                         'SocialFollowers', {}).get('Follower', []) or []) if 'followerAddress' in following]
-                    recommended_users = format_farcaster_followers_data(
+                    recommended_users = format_socials_followers_data(
                         followings,
+                        dappName,
                         recommended_users
                     )
 
@@ -322,93 +255,24 @@ class ExecuteOnchainGraph():
                     else:
                         res = await res.get_next_page
                 else:
-                    print("Error: ", res.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {res.error}")
 
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()
             raise AirstackException(f"Error message {error}")
 
-    async def __fetch_lens_followers(self, address, existing_users=[]):
+    async def _fetch_token_transfers(self, address: str, transferType: TransferType = TransferType.SEND, existing_users: list = []) -> list:
         try:
-            social_followings_query = """
-            query MyQuery($user: Identity!) {
-            SocialFollowings(
-                input: {filter: {identity: {_eq: $user}, dappName: {_eq: lens}}, blockchain: ALL, limit: 200}
-            ) {
-                Following {
-                followingAddress {
-                    addresses
-                    domains {
-                    name
-                    isPrimary
-                    }
-                    socials {
-                    dappName
-                    blockchain
-                    profileName
-                    profileImage
-                    profileTokenId
-                    profileTokenAddress
-                    }
-                    xmtp {
-                    isXMTPEnabled
-                    }
-                    mutualFollower: socialFollowers(
-                    input: {filter: {identity: {_eq: $user}, dappName: {_eq: lens}}}
-                    ) {
-                    Follower {
-                        followerAddress {
-                        socials {
-                            profileName
-                        }
-                        }
-                    }
-                    }
-                }
-                }
-            }
-            }
-            """
-            res = None
-            recommended_users = existing_users.copy()
-            while True:
-                if res is None:
-                    execute_query_client = self.api_client.create_execute_query_object(
-                        query=social_followings_query, variables={'user': address})
-                    res = await execute_query_client.execute_paginated_query()
-
-                if res.error is None:
-                    followings = [following['followingAddress'] for following in (res.data.get(
-                        'SocialFollowings', {}).get('Following', []) or []) if 'followingAddress' in following]
-                    recommended_users = format_lens_followings_data(
-                        followings,
-                        recommended_users
-                    )
-
-                    if not res.has_next_page:
-                        break
-                    else:
-                        res = await res.get_next_page
-                else:
-                    print("Error: ", res.error)
-                    break
-
-            return recommended_users
-        except Exception as e:
-            error = traceback.format_exc()
-            raise AirstackException(f"Error message {error}")
-
-    async def __fetch_token_sent(self, address, existing_users=[]):
-        try:
+            isSend = transferType == TransferType.SEND
             token_sent_query = """
             query MyQuery($user: Identity!) {
             Ethereum: TokenTransfers(
                 input: {filter: {from: {_eq: $user}}, blockchain: ethereum, limit: 200}
             ) {
                 TokenTransfer {
-                account: from {
+                account:""" + "from" if isSend else "to" + """{
                     addresses
                     domains {
                     name
@@ -432,7 +296,7 @@ class ExecuteOnchainGraph():
                 input: {filter: {from: {_eq: $user}}, blockchain: ethereum, limit: 200}
             ) {
                 TokenTransfer {
-                account: from {
+                account:""" + "from" if isSend else "to" + """{
                     addresses
                     domains {
                     name
@@ -468,7 +332,7 @@ class ExecuteOnchainGraph():
                     polygon_data = [transfer['account'] for transfer in (res.data.get('Polygon', {}).get(
                         'TokenTransfer', []) if res.data and 'Polygon' in res.data and 'TokenTransfer' in res.data['Polygon'] else [])]
                     token_transfer = eth_data + polygon_data
-                    recommended_users = format_token_sent_data(
+                    recommended_users = (format_token_sent_data if isSend else format_token_received_data)(
                         token_transfer,
                         recommended_users
                     )
@@ -478,101 +342,15 @@ class ExecuteOnchainGraph():
                     else:
                         res = await res.get_next_page
                 else:
-                    print("Error: ", res.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {res.error}")
 
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()
             raise AirstackException(f"Error message {error}")
 
-    async def __fetch_token_received(self, address, existing_users=[]):
-        try:
-            token_received_query = """
-            query MyQuery($user: Identity!) {
-            Ethereum: TokenTransfers(
-                input: {filter: {to: {_eq: $user}}, blockchain: ethereum, limit: 200}
-            ) {
-                TokenTransfer {
-                account: to {
-                    addresses
-                    domains {
-                    name
-                    isPrimary
-                    }
-                    socials {
-                    dappName
-                    blockchain
-                    profileName
-                    profileImage
-                    profileTokenId
-                    profileTokenAddress
-                    }
-                    xmtp {
-                    isXMTPEnabled
-                    }
-                }
-                }
-            }
-            Polygon: TokenTransfers(
-                input: {filter: {to: {_eq: $user}}, blockchain: ethereum, limit: 200}
-            ) {
-                TokenTransfer {
-                account: to {
-                    addresses
-                    domains {
-                    name
-                    isPrimary
-                    }
-                    socials {
-                    dappName
-                    blockchain
-                    profileName
-                    profileImage
-                    profileTokenId
-                    profileTokenAddress
-                    }
-                    xmtp {
-                    isXMTPEnabled
-                    }
-                }
-                }
-            }
-            }
-            """
-            res = None
-            recommended_users = existing_users.copy()
-            while True:
-                if res is None:
-                    execute_query_client = self.api_client.create_execute_query_object(
-                        query=token_received_query, variables={'user': address})
-                    res = await execute_query_client.execute_paginated_query()
-
-                if res.error is None:
-                    eth_data = [transfer['account'] for transfer in (res.data.get('Ethereum', {}).get(
-                        'TokenTransfer', []) if res.data and 'Ethereum' in res.data and 'TokenTransfer' in res.data['Ethereum'] else [])]
-                    polygon_data = [transfer['account'] for transfer in (res.data.get('Polygon', {}).get(
-                        'TokenTransfer', []) if res.data and 'Polygon' in res.data and 'TokenTransfer' in res.data['Polygon'] else [])]
-                    token_transfer = eth_data + polygon_data
-                    recommended_users = format_token_received_data(
-                        token_transfer,
-                        recommended_users
-                    )
-
-                    if not res.has_next_page:
-                        break
-                    else:
-                        res = await res.get_next_page
-                else:
-                    print("Error: ", res.error)
-                    break
-
-            return recommended_users
-        except Exception as e:
-            error = traceback.format_exc()
-            raise AirstackException(f"Error message {error}")
-
-    async def __fetch_eth_nft(self, address, existing_users=[]):
+    async def _fetch_eth_nft(self, address: str, existing_users: list = []) -> list:
         try:
             nft_addresses_query = """
             query MyQuery($user: Identity!) {
@@ -656,23 +434,23 @@ class ExecuteOnchainGraph():
                             else:
                                 eth_nft_holders_response = await eth_nft_holders_response.get_next_page
                         else:
-                            print("Error: ", eth_nft_holders_response.error)
-                            break
+                            raise AirstackException(
+                                f"Error message {eth_nft_holders_response.error}")
 
                     if not eth_nft_response.has_next_page:
                         break
                     else:
                         eth_nft_response = await eth_nft_response.get_next_page
                 else:
-                    print("Error: ", eth_nft_response.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {eth_nft_response.error}")
 
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()
             raise AirstackException(f"Error message {error}")
 
-    async def __fetch_polygon_nft(self, address, existing_users=[]):
+    async def _fetch_polygon_nft(self, address, existing_users=[]):
         try:
             nft_addresses_query = """
             query MyQuery($user: Identity!) {
@@ -755,16 +533,16 @@ class ExecuteOnchainGraph():
                             else:
                                 polygon_nft_holders_response = await polygon_nft_holders_response.get_next_page
                         else:
-                            print("Error: ", polygon_nft_holders_response.error)
-                            break
+                            raise AirstackException(
+                                f"Error message {polygon_nft_holders_response.error}")
 
                     if not polygon_nft_response.has_next_page:
                         break
                     else:
                         polygon_nft_response = await polygon_nft_response.get_next_page
                 else:
-                    print("Error: ", polygon_nft_response.error)
-                    break
+                    raise AirstackException(
+                        f"Error message {polygon_nft_response.error}")
 
             return recommended_users
         except Exception as e:
@@ -775,18 +553,15 @@ class ExecuteOnchainGraph():
         try:
             recommended_users = []
             fetch_functions = [
-                self.__fetch_poaps_data,
-                self.__fetch_farcaster_followings,
-                self.__fetch_lens_followings,
-                self.__fetch_farcaster_followers,
-                self.__fetch_lens_followers,
-                self.__fetch_token_sent,
-                self.__fetch_token_received,
-                self.__fetch_eth_nft,
-                self.__fetch_polygon_nft,
+                self._fetch_poaps_data,
+                self._fetch_socials_followings,
+                self._fetch_socials_followers,
+                self._fetch_token_transfers,
+                self._fetch_eth_nft,
+                self._fetch_polygon_nft,
             ]
             for func in fetch_functions:
-                recommended_users = await func(address, recommended_users)
+                recommended_users = await func(address=address, recommended_users=recommended_users)
             return recommended_users
         except Exception as e:
             error = traceback.format_exc()

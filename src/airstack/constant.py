@@ -3,6 +3,19 @@ Module: constant.py
 Description: This module contains the constant used in airstack sdk.
 """
 
+from enum import Enum
+
+
+class SocialsDappName(Enum):
+    LENS = "lens"
+    FARCASTER = "farcaster"
+
+
+class TransferType(Enum):
+    SEND = "send"
+    RECEIVED = "received"
+
+
 class AirstackConstants:
     """Class for keeping constants
     """

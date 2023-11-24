@@ -7,6 +7,7 @@ import re
 from graphql.language.ast import Field, ObjectField, ObjectValue, StringValue, Name, Argument, FragmentSpread, InlineFragment, SelectionSet, Document
 from graphql.language.visitor import Visitor
 from graphql import parse, print_ast
+from airstack.constant import SocialsDappName
 from configurations.conf import default_score_map, BURNED_ADDRESSES
 
 
@@ -285,11 +286,9 @@ def format_poaps_data(poaps, existing_user=None):
     return recommended_users
 
 
-def format_farcaster_followings_data(followings, existing_user=None):
-    if existing_user is None:
-        existing_user = []
-
+def format_socials_followings_data(followings: list, dappName: SocialsDappName = SocialsDappName.LENS, existing_user: list = []) -> list:
     recommended_users = existing_user.copy()
+    is_dappname_lens = dappName == SocialsDappName.LENS
     for following in followings:
         existing_user_index = -1
         for index, recommended_user in enumerate(recommended_users):
@@ -310,6 +309,10 @@ def format_farcaster_followings_data(followings, existing_user=None):
                 **recommended_users[existing_user_index],
                 'follows': {
                     **follows,
+                    'followingOnLens': True,
+                    'followedOnLens': follows_back
+                } if is_dappname_lens else {
+                    **follows,
                     'followingOnFarcaster': True,
                     'followedOnFarcaster': follows_back
                 }
@@ -318,15 +321,17 @@ def format_farcaster_followings_data(followings, existing_user=None):
             recommended_users.append({
                 **following,
                 'follows': {
+                    **follows,
+                    'followingOnLens': True,
+                    'followedOnLens': follows_back
+                } if is_dappname_lens else {
+                    **follows,
                     'followingOnFarcaster': True,
                     'followedOnFarcaster': follows_back
                 }
             })
 
     return recommended_users
-
-
-def format_lens_followings_data(followings, existing_user=None):
     if existing_user is None:
         existing_user = []
 
@@ -366,12 +371,9 @@ def format_lens_followings_data(followings, existing_user=None):
     return recommended_users
 
 
-def format_farcaster_followers_data(followers, existing_user=None):
-    if existing_user is None:
-        existing_user = []
-
+def format_socials_followers_data(followers: list, dappName: SocialsDappName = SocialsDappName.LENS, existing_user: list = []) -> list:
     recommended_users = existing_user.copy()
-
+    is_dappname_lens = dappName == SocialsDappName.LENS
     for follower in followers:
         existing_user_index = -1
         for index, recommended_user in enumerate(recommended_users):
@@ -385,48 +387,9 @@ def format_farcaster_followers_data(followers, existing_user=None):
         if existing_user_index != -1:
             follows = recommended_users[existing_user_index].get('follows', {})
 
-            follows['followedOnFarcaster'] = True
-            follows['followingOnFarcaster'] = follows.get(
+            follows['followedOnLens' if is_dappname_lens else 'followedOnFarcaster'] = True
+            follows['followingOnLens' if is_dappname_lens else 'followingOnFarcaster'] = follows.get(
                 'followingOnFarcaster', False) or following
-
-            recommended_users[existing_user_index].update({
-                **follower,
-                'follows': follows
-            })
-        else:
-            recommended_users.append({
-                **follower,
-                'follows': {
-                    'followingOnFarcaster': following,
-                    'followedOnFarcaster': True
-                }
-            })
-
-    return recommended_users
-
-
-def format_lens_followers_data(followers, existing_user=None):
-    if existing_user is None:
-        existing_user = []
-
-    recommended_users = existing_user.copy()
-
-    for follower in followers:
-        existing_user_index = -1
-        for index, recommended_user in enumerate(recommended_users):
-            recommended_user_addresses = recommended_user.get('addresses', [])
-            if any(address in follower.get('addresses', []) for address in recommended_user_addresses):
-                existing_user_index = index
-                break
-
-        following = bool(follower.get('mutualFollower', {}).get('Following'))
-
-        if existing_user_index != -1:
-            follows = recommended_users[existing_user_index].get('follows', {})
-
-            follows['followedOnLens'] = True
-            follows['followingOnLens'] = follows.get(
-                'followingOnLens', False) or following
 
             recommended_users[existing_user_index].update({
                 **follower,
@@ -438,16 +401,16 @@ def format_lens_followers_data(followers, existing_user=None):
                 'follows': {
                     'followingOnLens': following,
                     'followedOnLens': True
+                } if is_dappname_lens else {
+                    'followingOnFarcaster': following,
+                    'followedOnFarcaster': True
                 }
             })
 
     return recommended_users
 
 
-def format_token_sent_data(data, recommended_users=None):
-    if recommended_users is None:
-        recommended_users = []
-
+def format_token_sent_data(data: list, recommended_users: list = []):
     for transfer in data:
         addresses = transfer.get('addresses', [])
         existing_user_index = next((index for index, recommended_user in enumerate(recommended_users)
@@ -471,10 +434,7 @@ def format_token_sent_data(data, recommended_users=None):
     return recommended_users
 
 
-def format_token_received_data(data, _recommended_users=None):
-    if _recommended_users is None:
-        _recommended_users = []
-
+def format_token_received_data(data: list, _recommended_users: list = []) -> list:
     recommended_users = _recommended_users.copy()
 
     for transfer in data:
