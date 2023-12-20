@@ -321,11 +321,9 @@ def format_socials_followings_data(followings: list, dappName: SocialsDappName =
             recommended_users.append({
                 **following,
                 'follows': {
-                    **follows,
                     'followingOnLens': True,
                     'followedOnLens': follows_back
                 } if is_dappname_lens else {
-                    **follows,
                     'followingOnFarcaster': True,
                     'followedOnFarcaster': follows_back
                 }

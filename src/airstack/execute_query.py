@@ -15,10 +15,20 @@ from airstack.generic import (
     has_cursor,
     RemoveQueryByStartingName,
     add_page_info_to_queries,
-    remove_unused_variables
+    remove_unused_variables,
+    format_poaps_data,
+    format_socials_followings_data,
+    format_socials_followers_data,
+    format_token_sent_data,
+    format_token_received_data,
+    format_eth_nft_data,
+    format_polygon_nft_data,
+    calculating_score
 )
 from airstack.constant import AirstackConstants
-from airstack.popular_queries import ExecutePopularQueries
+# from airstack.popular_queries import ExecutePopularQueries
+from airstack.constant import SocialsDappName, TransferType
+from utility.custom_exception import AirstackException
 from airstack.onchain_graph import ExecuteOnchainGraph
 
 warnings.filterwarnings("ignore", message="coroutine .* was never awaited")
@@ -85,19 +95,9 @@ class AirstackClient:
                                      api_key=self.api_key, timeout=self.timeout)
         return execute_query
 
-    def queries_object(self):
-        """Create popular query object for popular queries
-
-        Returns:
-            object: execute popular query obiect
-        """
-        execute_popular_query = ExecutePopularQueries(url=self.url, api_key=self.api_key,
-                                                      timeout=self.timeout)
-        return execute_popular_query
-
     def onchain_graph(self):
         onchain_graph_object = ExecuteOnchainGraph(
-            url=self.url, api_key=self.api_key)
+            create_execute_query_object=self.create_execute_query_object)
         return onchain_graph_object
 
 

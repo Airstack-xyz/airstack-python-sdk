@@ -16,6 +16,12 @@ class TransferType(Enum):
     RECEIVED = "received"
 
 
+class ChainType(Enum):
+    ETH = "ethereum"
+    POLYGON = "polygon"
+    BASE = "base"
+
+
 class AirstackConstants:
     """Class for keeping constants
     """

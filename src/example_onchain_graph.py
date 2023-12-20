@@ -14,9 +14,7 @@ async def main():
 
     api_client = AirstackClient(api_key=api_key)
     onchain_graph_client = api_client.onchain_graph()
-    res = await onchain_graph_client.fetch_onchain_graph_data("betashop.eth")
-    res_with_score = onchain_graph_client.calculate_score(res)
-    sorted_res = onchain_graph_client.sort_by_score(res_with_score)
-    print(sorted_res[0])
+    res = await onchain_graph_client.fetch_onchain_graph_data("yosephks.eth")
+    print(len(res), res if len(res) > 0 else "No data found")
 
 asyncio.run(main())
